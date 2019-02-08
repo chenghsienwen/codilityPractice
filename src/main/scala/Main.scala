@@ -566,4 +566,54 @@ object Solution {
     }
     trace(h.toList)(List.empty[Int], List.empty[Int])
   }
+
+  def EquiLeader(a: Array[Int]): Int = {
+    val t = a.groupBy(i => i).map(i => (i._1 -> i._2.size))
+    val leader = t.isEmpty match {
+      case true => (-1,-1)
+      case false => t.maxBy(_._2)
+    }
+    val length = a.length
+    val leaderNum = leader._1
+    val leaderCount = leader._2
+
+    def trace(index: Int, a:List[Int])(leftCount: Int, accu: Int): Int = {
+      //println("index "+ index + " accu " + accu)
+      a match {
+        case head::tail => {
+          head == leaderNum match {
+            case true => {
+              val leaderInLeftPart = leftCount+1
+              val leaderInRightPart = leaderCount-leaderInLeftPart
+              val left = (index+1)
+              val right = (length -index -1)
+              //println("leaderInLeftPart " + leaderInLeftPart + " left " + left + " leaderInRightPart " + leaderInRightPart + " right "+right)
+              (leaderInLeftPart*2 > left, leaderInRightPart*2 > right) match {
+                case (true, true) =>  trace(index+1, tail)(leaderInLeftPart, accu+1)
+                case (_, _) =>  trace(index+1, tail)(leaderInLeftPart, accu)
+              }
+            }
+            case false =>  {
+              val leaderInLeftPart = leftCount
+              val leaderInRightPart = leaderCount-leaderInLeftPart
+              val left = (index+1)
+              val right = (length -index -1)
+              (leaderInLeftPart*2 > left, leaderInRightPart*2 > right) match {
+                case (true, true) => trace(index+1, tail)(leftCount, accu+1)
+                case (_, _) => trace(index+1, tail)(leftCount, accu)
+              }
+
+            }
+          }
+        }
+        case Nil => accu
+      }
+    }
+    a.isEmpty match {
+      case true => 0
+      case false => trace(0, a.toList)(0, 0)
+    }
+
+  }
+
 }
