@@ -616,4 +616,107 @@ object Solution {
 
   }
 
+  def Dominator(a: Array[Int]): Int = {
+    val t = a.indices.map(i => i->a(i)).groupBy(i => i._2)
+    t.isEmpty match {
+      case true => -1
+      case false => {
+        val max = t.maxBy(_._2.size)
+        max._2.size*2 > a.length match {
+          case true => max._2.head._1
+          case false => -1
+        }
+      }
+    }
+  }
+
+  def MaxSliceSum1(a: Array[Int]): Int = {
+    def trace(a: List[Int])(accu: Int, max: Int): Int = {
+      a match {
+        case head :: tail => {
+          val temp = accu + head
+          temp > max match {
+            case true => trace( tail )( temp, temp )
+            case false => trace( tail )( temp, max )
+          }
+        }
+        case Nil => max
+      }
+
+    }
+    def traceByIndex(a: List[Int])(max:Int):Int = {
+      a match {
+        case head::tail => {
+          val tempMax = trace(a)(0, max)
+          tempMax > max match {
+            case true => traceByIndex(tail)(tempMax)
+            case false => traceByIndex(tail)(max)
+          }
+        }
+        case Nil => max
+      }
+    }
+    traceByIndex(a.toList)(Int.MinValue)
+  }
+
+  def MaxSliceSum2(a: Array[Int]): Int = {
+    def trace(a: List[Int])(accu: Int, max: Int): Int = {
+      a match {
+        case head :: tail => {
+          val temp = Math.max(accu + head, head)
+          trace( tail )( temp, Math.max(temp, max) )
+
+        }
+        case Nil => max
+      }
+    }
+    trace(a.toList)(0, Int.MinValue)
+  }
+
+  def MaxProfit(a: Array[Int]): Int = {
+    def trace(a: List[Int])(slice:Int, max: Int): Int = {
+      a match {
+        case head :: tail => {
+          val temp = Math.min(slice, head)
+          trace( tail )(temp, Math.max(head - temp, max))
+        }
+        case Nil => max
+      }
+    }
+    trace(a.toList)(Int.MaxValue, 0)
+  }
+
+  def MaxDoubleSliceSum(a: Array[Int]): Int = {
+    //https://en.wikipedia.org/wiki/Maximum_subarray_problem
+    val list = a.toList
+    def trace(a: List[Int])(k: List[Int]):List[Int] = {
+      a match {
+        case head::tail => {
+          trace(tail)(Math.max(k.head+head,0)::k)
+        }
+        case Nil => k
+      }
+    }
+    val k1 = trace(list.tail)(List(0)).reverse
+    val k2 = trace(list.reverse.tail)(List(0))
+    //println("k1:"+k1.mkString(",")+" k2: "+ k2.mkString(","))
+    (1 until list.length-1).foldLeft(0){(z,i) =>
+      //println(i+" k1(i-1) "+ k1(i-1) +" k2(i+1) "+ k2(i+1))
+      Math.max(z, k1(i-1)+k2(i+1))
+    }
+  }
+
+  def CountFactors(n: Int): Int = {
+    def trace(n:Int, div: Int)(accu: Int):Int = {
+      div*div  match {
+        case s if s == n => trace(n, div+1)(accu+1)
+        case s if s<n => n%div == 0 match {
+          case true => trace(n, div+1)(accu+2)
+          case false => trace(n, div+1)(accu)
+        }
+        case _ => accu
+      }
+    }
+    trace(n, 1)(0)
+  }
 }
