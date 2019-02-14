@@ -719,4 +719,236 @@ object Solution {
     }
     trace(n, 1)(0)
   }
+
+  def MinPerimeterRectangle(n: Int): Int = {
+    def trace(n:Int, div:Int)(min:Int):Int = {
+      div*div <= n match {
+        case true => n%div == 0 match {
+          case true => trace(n, div+1)(Math.min(min, div + (n/div)))
+          case false => trace(n, div+1)(min)
+        }
+        case false => min
+      }
+    }
+    trace(n, 1)(Int.MaxValue)*2
+  }
+
+  def Peaks(a: Array[Int]): Int = {
+    def check(item:Int, previous:Int):Int = {
+      item match {
+        case s if s > previous => 1
+        case s if s == previous => 0
+        case _ => -1
+      }
+    }
+    def trace(a: List[Int])(previous: Int, status: Int, accu: Int): Int = {
+      a match {
+        case head::tail => {
+          val s = check(head, previous)
+          (status, s) match {
+            case (1, -1) => trace(tail)(head, s, accu+1)
+            case (_, _) => trace(tail)(head, s, accu)
+          }
+        }
+        case Nil => accu
+      }
+    }
+    val peaks = trace(a.toList)(0, 0, 0)
+    peaks == 0 match {
+      case true => 0
+      case false => {
+        (1 to peaks).map{ i =>
+          (a.length%i == 0) match {
+            case true => i
+            case false => 0
+          }
+        }.max
+      }
+    }
+  }
+
+  def CountSemiprimes1(n: Int, p: Array[Int], q: Array[Int]): Array[Int] = {
+    val primes = 2 #:: Stream.from(3,2)
+    def isPrime(n: Int): Boolean =
+      primes.takeWhile(p => p*p <= n).forall(n % _ != 0)
+    val items = primes.filter(isPrime).takeWhile(i => i*2<=n).toList
+    //println("items " + items.mkString(","))
+    val semiPrimes = (for {
+      x <- items
+      y <- items
+    } yield {
+      x*y
+    }).toSet.filter(x => x<=n)
+    (0 until p.length).map{ i =>
+      semiPrimes.count(x => x >= p(i) && x <= q(i))
+    }.toArray
+  }
+
+  def CountSemiprimes2(n: Int, p: Array[Int], q: Array[Int]): Array[Int] = {
+    val primes = 2 #:: Stream.from(3,2)
+    def isPrime(n: Int): Boolean =
+      primes.takeWhile(p => p*p <= n).forall(n % _ != 0)
+    val items = primes.filter(isPrime).takeWhile(i => i*2<=n).toList
+    //println("items " + items.mkString(","))
+    val semiPrimes = (for {
+      x <- items
+      y <- items
+    } yield {
+      x*y
+    }).toSet.filter(x => x<=n)
+    def trace(a:List[Int])(accu:Int, result: List[Int]): List[Int] = {
+      a match {
+        case head::tail => semiPrimes.contains(head) match {
+          case true => val add = accu+1;trace(tail)(add, add::result)
+          case false => trace(tail)(accu, accu::result)
+        }
+        case Nil => result
+      }
+    }
+    val accumlative = trace((0 to n).toList)(0,List.empty[Int]).reverse
+    //println("accumlative" + accumlative.mkString(","))
+    (0 until p.length).map{ i =>
+      accumlative(q(i)) - accumlative(p(i)-1)
+    }.toArray
+  }
+
+  def CountNonDivisible1(a: Array[Int]): Array[Int] = {
+    def divisor(a:Int): Set[Int] = {
+      (1 to Math.sqrt(a).toInt).map{ i =>
+        a%i == 0 match {
+          case true => i
+          case false => -1
+        }
+      }.toSet
+    }
+    val length = a.length
+    a.map{ i =>
+      val div = divisor(i) + i
+      //println("div "+div.mkString(","))
+      length - a.count(j => div.contains(j))
+    }
+  }
+
+  def ChocolatesByNumbers1(n: Int, m: Int): Int = {
+    def trace(n:Int, m:Int)(step:Int, segment:Int, accu:Int): Int = {
+      println("step " + step + " segment " + segment + " accu " + accu)
+      (segment == 2) match {
+        case true => accu
+        case false => step * m % n == 0 match {
+          case true => trace( n, m )( step + 1, segment+1, accu + 1 )
+          case false => trace( n, m )( step + 1, segment, accu + 1 )
+        }
+      }
+    }
+    Math.min(trace(n,m)(0, 0, 0)-1, n)
+  }
+
+  def ChocolatesByNumbers2(n: Int, m: Int): Int = {
+    def gcd(a: Int, b: Int): Int = {
+      a < b match {
+        case true => gcd(b, a)
+        case false => {
+          val modulo = a % b
+          modulo == 0 match {
+            case true => b
+            case false => gcd(b, modulo)
+          }
+        }
+      }
+    }
+    n / gcd(n, m)
+  }
+
+  def CommonPrimeDivisors1(a: Array[Int], b: Array[Int]): Int = {
+    def gcd(a: Int, b: Int): Int = {
+      a < b match {
+        case true => gcd(b, a)
+        case false => {
+          val modulo = a % b
+          modulo == 0 match {
+            case true => b
+            case false => gcd(b, modulo)
+          }
+        }
+      }
+    }
+
+    def surplus(x:Int, gcd: Set[Int]):Int = {
+      gcd.nonEmpty match {
+        case true => x%gcd.head == 0 match {
+          case true => surplus(x/gcd.head, gcd)
+          case false => surplus(x, gcd.tail)
+        }
+        case false => x
+      }
+    }
+
+    (0 until a.length).map{ i =>
+      val g = gcd(a(i), b(i))
+
+      val items = (2 to g).map{ i => g%i == 0 match {
+        case true => i
+        case false => -1
+      }
+      }.toSet.filterNot(i => i == -1)
+      val surplus1 = surplus(a(i)/g, items)
+      val surplus2 = surplus(b(i)/g, items)
+      (surplus1 == 1, surplus2 == 1) match {
+        case (true, true) => 1
+        case (_, _) => 0
+      }
+    }.sum
+  }
+
+  def CommonPrimeDivisors2(a: Array[Int], b: Array[Int]): Int = {
+    def gcd(a: Int, b: Int): Int = {
+      a < b match {
+        case true => gcd(b, a)
+        case false => {
+          val modulo = a % b
+          modulo == 0 match {
+            case true => b
+            case false => gcd(b, modulo)
+          }
+        }
+      }
+    }
+
+    def surplus(x:Int, gcd: Set[Int]):Int = {
+      gcd.nonEmpty match {
+        case true => x%gcd.head == 0 match {
+          case true => surplus(x/gcd.head, gcd)
+          case false => surplus(x, gcd.tail)
+        }
+        case false => x
+      }
+    }
+
+    def factors(n: Int, index: Int)(accu:Set[Int]): Set[Int] = {
+      index <= n match {
+        case true => n%index == 0 match {
+          case true => factors(n/index, 2)(accu + index)
+          case false => factors(n, index+1)(accu)
+        }
+        case false => accu
+      }
+    }
+
+    (0 until a.length).map{ i =>
+      a(i) == b(i) match {
+        case true => 1
+        case false => {
+          val g = gcd(a(i), b(i))
+          val factor = factors(g, 2)(Set.empty[Int])
+          //println("factor "+ factor.mkString(","))
+          val surplus1 = surplus(a(i)/g, factor)
+          val surplus2 = surplus(b(i)/g, factor)
+          (surplus1 == 1, surplus2 == 1) match {
+            case (true, true) => 1
+            case (_, _) => 0
+          }
+        }
+      }
+    }.sum
+  }
 }
