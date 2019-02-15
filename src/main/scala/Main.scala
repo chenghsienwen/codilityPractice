@@ -951,4 +951,62 @@ object Solution {
       }
     }.sum
   }
+
+  val fibs:Stream[Int] = 0 #:: 1 #:: (fibs zip fibs.tail).map{ case(a, b) => a+b }
+  def FibFrog1(a: Array[Int]): Int = {
+    val ops = fibs.take(a.length).toSet
+    val init = (a.toList ++ List(1)).reverse
+    def trace(a: List[Int], index: Int)(pos: Int, accu: Int): Int = {
+      println("index "+ index + " pos " + pos + " accu "+ accu)
+      pos == a.length-1 match {
+        case false => {
+          a.head match {
+            case 1 => {
+              val dis = init.length -1 - index -pos
+              ops.contains(dis) match {
+                case true => trace(init, 0)(pos + dis, accu+1)
+                case false => trace(a.tail, index+1)(pos, accu)
+              }
+            }
+            case _ => trace(a.tail, index+1)(pos, accu)
+          }
+        }
+        case true => accu
+      }
+    }
+    a.isEmpty match {
+      case true => 1
+      case false => trace(init, 0)(-1, 0) match {
+        case 0 => -1
+        case s => s
+      }
+    }
+  }
+
+  def FibFrog2(a: Array[Int]): Int = {
+    val ops = fibs.takeWhile(i => i < a.length+1).toSet
+    //println("ops" + ops.mkString(","))
+    val list = a.toList ++ List(1)
+    def trace(a: List[Int])(pos: Int, accu: Int): Int = {
+      //println(" pos " + pos + " accu "+ accu)
+      pos == list.length - 1 match {
+        case true => accu
+        case false => {
+          val moves = ops.filter{i =>
+            val dis = i + pos
+            (dis > 0, dis < list.length) match {
+              case (true, true) => a(dis) == 1
+              case (_, _) => false
+            }
+          }
+          //println("possible moves " + moves.mkString(","))
+          moves.isEmpty match {
+            case true => -1
+            case false => trace(a)(pos + moves.max, accu + 1 )
+          }
+        }
+      }
+    }
+    trace(list)(-1, 0)
+  }
 }
